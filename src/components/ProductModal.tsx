@@ -36,6 +36,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
   const [isFetchingRelease, setIsFetchingRelease] = useState(false);
   const [fetchStatus, setFetchStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
+  const [aiStatusMessage, setAiStatusMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialProduct) {
@@ -116,6 +118,48 @@ export const ProductModal: React.FC<ProductModalProps> = ({
     });
   };
 
+  const handleAiAutoFill = async () => {
+    setIsAiAnalyzing(true);
+    setAiStatusMessage(null);
+    try {
+      const res = await fetch('/api/ai/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'full_analysis',
+          input: {
+            rawName: formData.name_en || formData.name || formData.id,
+            repository: formData.repository,
+            description: formData.description,
+            rawFilename: formData.apk_asset,
+            type: formData.type,
+          },
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success && data.result) {
+        const r = data.result;
+        setFormData((prev) => ({
+          ...prev,
+          name_ar: r.suggested_name_ar || prev.name_ar,
+          name_en: r.suggested_name_en || prev.name_en,
+          name: r.suggested_name_en || prev.name,
+          type: r.category || prev.type,
+          apk_asset: r.apk_asset_name || prev.apk_asset,
+          description: r.description_ar || prev.description,
+        }));
+        setAiStatusMessage(data.message_ar || 'تم التحليل وتعبئة الحقول بنجاح.');
+      } else {
+        setAiStatusMessage(data.message_ar || 'فشل التحليل الذكي.');
+      }
+    } catch {
+      setAiStatusMessage('تعذر الاتصال بخدمة الذكاء الاصطناعي.');
+    } finally {
+      setIsAiAnalyzing(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.id.trim()) {
@@ -154,16 +198,36 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 أدخل مسار المستودع ثم اضغط لجلب الإصدار والروابط وسجل التغييرات مباشرة.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={handleFetchGithubData}
-              disabled={isFetchingRelease}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-xs font-medium transition-all shrink-0"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isFetchingRelease ? 'animate-spin' : ''}`} />
-              <span>جلب بيانات Release</span>
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={handleAiAutoFill}
+                disabled={isAiAnalyzing}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium transition-all shadow-sm shadow-purple-900/30"
+                title="تحليل وتعبئة ذكية بـ Google Gemini"
+              >
+                <Sparkles className={`w-3.5 h-3.5 ${isAiAnalyzing ? 'animate-spin' : ''}`} />
+                <span>{isAiAnalyzing ? 'جاري التحليل...' : 'تعبئة ذكية بـ AI'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleFetchGithubData}
+                disabled={isFetchingRelease}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-xs font-medium transition-all shrink-0"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isFetchingRelease ? 'animate-spin' : ''}`} />
+                <span>جلب بيانات Release</span>
+              </button>
+            </div>
           </div>
+
+          {aiStatusMessage && (
+            <div className="mt-2.5 p-2 rounded-lg text-xs bg-purple-950/60 text-purple-200 border border-purple-800/60 flex items-center gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+              <span>{aiStatusMessage}</span>
+            </div>
+          )}
 
           {fetchStatus && (
             <div

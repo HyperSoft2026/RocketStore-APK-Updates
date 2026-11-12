@@ -13,6 +13,7 @@ import { ProductModal } from './components/ProductModal';
 import { GithubInspector } from './components/GithubInspector';
 import { ValidatorView } from './components/ValidatorView';
 import { DocsView } from './components/DocsView';
+import { RocketStoreAI } from './components/RocketStoreAI';
 import {
   Plus,
   Search,
@@ -30,7 +31,7 @@ import {
 
 export default function App() {
   const [products, setProducts] = useState<RocketStoreProduct[]>([]);
-  const [activeTab, setActiveTab] = useState<'registry' | 'inspector' | 'validator' | 'docs'>('registry');
+  const [activeTab, setActiveTab] = useState<'registry' | 'ai' | 'inspector' | 'validator' | 'docs'>('registry');
 
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -351,6 +352,9 @@ export default function App() {
             )}
           </div>
         )}
+
+        {/* Tab: RocketStore AI */}
+        {activeTab === 'ai' && <RocketStoreAI />}
 
         {/* Tab: GitHub Inspector */}
         {activeTab === 'inspector' && <GithubInspector />}

@@ -2,8 +2,8 @@ import React from 'react';
 import { Rocket, ExternalLink, CheckCircle2, ShieldCheck, Database, FileCode, PlayCircle, BookOpen } from 'lucide-react';
 
 interface HeaderProps {
-  activeTab: 'registry' | 'inspector' | 'validator' | 'docs';
-  setActiveTab: (tab: 'registry' | 'inspector' | 'validator' | 'docs') => void;
+  activeTab: 'registry' | 'ai' | 'inspector' | 'validator' | 'docs';
+  setActiveTab: (tab: 'registry' | 'ai' | 'inspector' | 'validator' | 'docs') => void;
   productCount: number;
   isValid: boolean;
 }
@@ -71,6 +71,21 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, product
           >
             <Database className="w-4 h-4" />
             <span>سجل المنتجات (apps-registry.json)</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('ai')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-lg transition-all border-b-2 dir-ltr ${
+              activeTab === 'ai'
+                ? 'border-purple-500 text-purple-300 bg-purple-950/40 shadow-sm'
+                : 'border-transparent text-slate-300 hover:text-purple-300 hover:bg-slate-800/30'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
+            <span>RocketStore AI</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono">
+              Gemini
+            </span>
           </button>
 
           <button
