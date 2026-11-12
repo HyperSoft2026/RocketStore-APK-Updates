@@ -17,7 +17,10 @@ dotenv.config();
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
-const isProduction = process.env.NODE_ENV === 'production';
+const isDev = process.env.NODE_ENV === 'development' || process.env.npm_lifecycle_event === 'dev';
+const distPath = path.resolve(process.cwd(), 'dist');
+const hasBuiltDist = fs.existsSync(path.resolve(distPath, 'index.html'));
+const isProduction = process.env.NODE_ENV === 'production' || (!isDev && hasBuiltDist);
 
 // Body parser
 app.use(express.json({ limit: '1mb' }));
@@ -204,6 +207,15 @@ app.post('/api/registry', (req: Request, res: Response) => {
   }
 });
 
+// Explicit 404 handler for unknown API routes (never fallback to index.html for API requests)
+app.all('/api/*', (_req: Request, res: Response) => {
+  res.status(404).json({
+    success: false,
+    status: 'not_found',
+    message_ar: 'نقطة النهاية المطلوبة غير موجودة في الـ API (404).',
+  });
+});
+
 // ==========================================
 // VITE OR STATIC SERVING
 // ==========================================
@@ -221,7 +233,6 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.resolve(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (_req: Request, res: Response) => {
       res.sendFile(path.resolve(distPath, 'index.html'));
@@ -229,7 +240,7 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 RocketStore Central Manager running on http://0.0.0.0:${PORT}`);
+    console.log(`🚀 RocketStore Central Manager running on http://0.0.0.0:${PORT} (${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'})`);
   });
 }
 
